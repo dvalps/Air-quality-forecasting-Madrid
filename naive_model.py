@@ -48,7 +48,3 @@ rmse1, mae1, ia1, mb1, pears1 = evaluate_forecast(y1_real, pred1, normalize = 1)
 errors1_norm = np.array([rmse1, mae1, ia1, mb1, pears1])
 print("Errors - Naive model 1: ")
 print(errors1)
-
-
-###################################################################
-# CAMS model
