@@ -23,7 +23,7 @@ from keras.layers import Bidirectional
 from evaluate_forecast import evaluate_forecast
 from normalization import normalize_by_columns_maxmin, denormalize_maxmin
 
-forecasting_horizons = [2, 6, 12, 24, 48]
+forecasting_horizons = [12, 24]
 
 for k_hrs in forecasting_horizons:
     # Set the forecasting horizon:
@@ -171,8 +171,8 @@ for k_hrs in forecasting_horizons:
     hidden_layers = 1          # SET THE NUMBER OF HIDDEN LAYERS  
     
     hidden_layer1_size = 45
-    hidden_layer2_size = 65
-    hidden_layer3_size = 45
+    hidden_layer2_size = 20
+    hidden_layer3_size = 5
     
     num_outputs = 1 # just one layer, and that one is bi-directional
     
@@ -261,7 +261,7 @@ for k_hrs in forecasting_horizons:
             model.compile(loss='mean_squared_error', optimizer=adam, metrics=['mean_squared_error'])
     
             # Train the LSTM
-            history = model.fit(X_train, y_train, epochs = 1000, batch_size = 124,\
+            history = model.fit(X_train, y_train, epochs = 500, batch_size = 124,\
                                 validation_data=(X_test, y_test), shuffle = False, \
                                 callbacks = [earlyStop], verbose=0)
             

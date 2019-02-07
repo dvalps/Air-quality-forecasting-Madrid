@@ -5,6 +5,7 @@
 """
 
 import numpy as np
+import pandas as pd
 
 from sklearn.linear_model import LinearRegression
 #from sklearn.linear_model import Ridge      # Uncomment to use Ridge Regression
@@ -14,7 +15,10 @@ from normalization import normalize_by_columns_maxmin, denormalize_maxmin
 
 
 # Set the forecasting horizon:
-k_hrs = 12
+k_hrs = 48
+
+# for saving (test-data) results
+forecasts_all = pd.DataFrame(data = None, columns = ['observed', 'predictions'])
 
 
 # Time delays to be used
@@ -118,6 +122,18 @@ if ensemble: list_all_features += list_macc
 # Remove unwanted features from X (columns).
 X = X[:, list_all_features]
 
+# Randomly shuffle the training examples
+X = np.hstack([X, y.reshape(-1,1)])
+# set the random seed and shuffle the matrix X
+np.random.seed(2)
+np.random.shuffle(X)
+# split again targets and training examples
+y = X[:,-1]
+X = X[:,0:-1]
+
+# number of training examples
+m = X.shape[0]
+
 n_folds = 10
 runs = 1
 
@@ -178,7 +194,11 @@ for k in range(n_folds):
         ##########################################################################
         ####################### Save the results into a matrix  ##################
         error_mat[run,:] = np.array([rmse_train, rmse_test, mae_train,  mae_test, ia_train, ia_test, mb_train, mb_test, pears_train, pears_test])
-       
+        
+    # Save the forecasts on the test data for this fold (just from the last run!)
+    new_pred = pd.DataFrame(data = list(zip(y_test_denorm, pred_test)), columns = ['observed', 'predictions'])
+    forecasts_all = forecasts_all.append(new_pred)
+    
     # Calculate the means, outside the for loop
     error_mat[runs, :] = sum(error_mat[:-1,:]) / len(error_mat[:-1,:])
     error_mat_folds[k, :] = error_mat[runs, :]
@@ -186,3 +206,6 @@ for k in range(n_folds):
 
 # Calculate the average over all folds
 error_mat_folds[n_folds, :] = np.mean(error_mat_folds[0:n_folds,:], axis = 0)
+
+# save the forecasts
+forecasts_all.to_csv("forecasts/forecasts_t" + str(k_hrs) + "_LinReg.csv")
