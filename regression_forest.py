@@ -1,6 +1,7 @@
 # author: dvalput
 
 import numpy as np
+import pandas as pd
 
 from evaluate_forecast import evaluate_forecast
 from normalization import normalize_by_columns_maxmin, denormalize_maxmin
@@ -9,7 +10,10 @@ from normalization import normalize_by_columns_maxmin, denormalize_maxmin
 from sklearn.ensemble import RandomForestRegressor
 
 # Set the forecasting horizon:
-k_hrs = 1
+k_hrs = 2
+
+# for saving (test-data) results
+forecasts_all = pd.DataFrame(data = None, columns = ['observed', 'predictions'])
 
 # Time delays to be used
 ########################################################################
@@ -35,7 +39,6 @@ if k_hrs < 6:
     which_traffic = np.array([0, 1, 2])
     
     which_other_pollutants = np.array([0, 1, 2, k_hrs+24, k_hrs+25, k_hrs+26])
-
 if k_hrs == 48:
     which_no2 = np.array([0, 1, 2, k_hrs - 24, k_hrs - 23, k_hrs - 22, k_hrs, k_hrs+1, k_hrs+2, k_hrs+24, k_hrs+25, k_hrs+26, k_hrs+48, k_hrs+49, k_hrs+50])
     
@@ -140,7 +143,7 @@ folds_idx[-1] = m
 n_estimators = 20
 criterion = 'mse'
 max_depth = 10
-min_impurity_split = 1e-07
+min_impurity_decrease = 1e-07
 use_bootstrap = True
 
 
@@ -155,7 +158,7 @@ for k in range(n_folds):
     for run in range(0, runs):
         
         model = RandomForestRegressor (n_estimators=n_estimators, criterion=criterion,
-        max_depth=max_depth, min_impurity_split=min_impurity_split, \
+        max_depth=max_depth, min_impurity_decrease=min_impurity_decrease, \
         bootstrap=use_bootstrap, verbose=0)
         
         history = model.fit(X_train, y_train)
@@ -183,7 +186,11 @@ for k in range(n_folds):
         ##########################################################################
         ####################### Save the results into a matrix  ##################
         error_mat[run,:] = np.array([rmse_train, rmse_test, mae_train,  mae_test, ia_train, ia_test, mb_train, mb_test, pears_train, pears_test])
-       
+    
+    # Save the forecasts on the test data for this fold (just from the last run!)
+    new_pred = pd.DataFrame(data = list(zip(y_test_denorm, pred_test)), columns = ['observed', 'predictions'])
+    forecasts_all = forecasts_all.append(new_pred)
+    
     # Calculate the means, outside the for loop
     error_mat[runs, :] = sum(error_mat[:-1,:]) / len(error_mat[:-1,:])
     error_mat_folds[k, :] = error_mat[runs, :]
@@ -191,3 +198,6 @@ for k in range(n_folds):
 
 # Calculate the average over all folds
 error_mat_folds[n_folds, :] = np.mean(error_mat_folds[0:n_folds,:], axis = 0)
+
+# save the forecasts
+forecasts_all.to_csv("forecasts/forecasts_t" + str(k_hrs) + "_RF.csv")

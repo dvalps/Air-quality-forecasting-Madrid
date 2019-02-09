@@ -7,6 +7,7 @@ Created on Tue Oct 10 17:32:56 2017
 """
 
 import numpy as np
+import pandas as pd
 
 # Keras imports
 from keras.models import Sequential
@@ -23,7 +24,10 @@ from normalization import normalize_by_columns_maxmin, denormalize_maxmin
 
 
 # Set the forecasting horizon:
-k_hrs = 1
+k_hrs = 2
+
+# for saving (test-data) results
+forecasts_all = pd.DataFrame(data = None, columns = ['observed', 'predictions'])
 
 # Time delays to be used
 ########################################################################
@@ -135,7 +139,7 @@ X = X[:,0:-1]
 m = X.shape[0]
 
 n_folds = 10
-runs = 5
+runs = 1
 
 fold_size = int(m/n_folds)
 
@@ -279,7 +283,11 @@ for k in range(n_folds):
         ##########################################################################
         ####################### Save the results into a matrix  ##################
         error_mat[run,:] = np.array([rmse_train, rmse_test, mae_train,  mae_test, ia_train, ia_test, mb_train, mb_test, pears_train, pears_test])
-       
+    
+    # Save the forecasts on the test data for this fold (just from the last run!)
+    new_pred = pd.DataFrame(data = list(zip(y_test_denorm, pred_test)), columns = ['observed', 'predictions'])
+    forecasts_all = forecasts_all.append(new_pred)
+    
     # Calculate the means, outside the for loop
     error_mat[runs, :] = sum(error_mat[:-1,:]) / len(error_mat[:-1,:])
     error_mat_folds[k, :] = error_mat[runs, :]
@@ -287,3 +295,6 @@ for k in range(n_folds):
 
 # Calculate the average over all folds
 error_mat_folds[n_folds, :] = np.mean(error_mat_folds[0:n_folds,:], axis = 0)
+
+# save the forecasts
+forecasts_all.to_csv("forecasts/forecasts_t" + str(k_hrs) + "_lstm" + str(hidden_layers) + ".csv")

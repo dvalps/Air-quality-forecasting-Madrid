@@ -10,7 +10,7 @@ from evaluate_forecast import evaluate_forecast
 from normalization import normalize_by_columns_maxmin, denormalize_maxmin
 
 # Set the forecasting horizon:
-k_hrs = 1
+k_hrs = 48
 
 # for saving (test-data) results
 forecasts_all = pd.DataFrame(data = None, columns = ['observed', 'predictions'])
