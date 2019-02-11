@@ -11,12 +11,34 @@ Created on Sat Feb  9 12:51:33 2019
 import numpy as np
 import pandas as pd
 
-horizons = [1, 2, 6, 12, 24, 48]
-models = ['FNN_deep1', 'FNN_deep2', 'FNN_deep3', 'SVM', 'LinReg', 'RF', 'lstm1']
+from evaluate_forecast import evaluate_forecast
 
-# read the data from csv
-df = pd.read_csv('forecasts_t' + str(1) + "_" + 'LinReg')
-print(df.head())
-for h in horizons[0:2]:
+horizons = [1, 2, 6, 12, 24, 48]
+models = ['FNN_deep1', 'FNN_deep2', 'FNN_deep3', 'SVM', 'RF', 'lstm1'] #'LinReg',
+
+
+for h in horizons:
+    # read the data from csv
+    df = pd.read_csv('forecasts/forecasts_t' + str(h) + "_" + 'LinReg.csv', usecols = ['observed', 'predictions'])
+    #print(df.head())
     for m in models:
-        df_temp = pd.read_csv('forecasts_t' + str(h) + "_" + m)
+        df_temp = pd.read_csv('forecasts/forecasts_t' + str(h) + "_" + m + ".csv", usecols = ['observed', 'predictions'])
+        #print(df.head())
+        # add a predictions column - using the name of the model as appendix
+        df["predictions_" + m] = df_temp["predictions"]
+        
+
+
+# calculate average
+df['avg'] = df.mean(axis = 1, skipna=True)
+print(df.head())
+
+rmse_avg, mae_avg, ia_avg, mb_avg, pears_avg = evaluate_forecast(df.observed, df.avg, normalize=0)
+
+# Calculate weighted average
+pass
+"""
+TO DO
+1 - (WEIGHT / WEIGHT.sum()), weights = RMSE_test
+"""
+
